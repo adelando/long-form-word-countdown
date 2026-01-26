@@ -2,6 +2,7 @@ import os
 import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.components.http import StaticPathConfig  # This is the key import
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,12 +16,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     local_path = hass.config.path("custom_components/long_form_word_countdown/www")
     
     if os.path.exists(local_path):
-        # The new API call for recent HA versions
+        # We pass a list of StaticPathConfig objects
         await hass.http.async_register_static_paths([
-            hass.http.StaticPathConfig("/long_form_word_countdown", local_path, True)
+            StaticPathConfig("/long_form_word_countdown", local_path, True)
         ])
     else:
-        _LOGGER.warning("The www directory was not found in the integration folder")
+        _LOGGER.warning("The www directory was not found at %s", local_path)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
