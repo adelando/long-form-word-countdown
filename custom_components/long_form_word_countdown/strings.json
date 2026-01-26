@@ -1,0 +1,19 @@
+{
+  "config": {
+    "error": {
+      "cannot_select_both": "Cannot enable 'After Timer' and 'Flash Zero' simultaneously."
+    },
+    "step": {
+      "user": {
+        "title": "New Countdown",
+        "data": {
+          "name": "Name",
+          "target_date": "Target Date hh:mm:ss dd/mm/yyy",
+          "icon": "Icon",
+          "after_timer": "Show elapsed time after zero?",
+          "flash_zero": "Flash at zero? (Disables elapsed time)"
+        }
+      }
+    }
+  }
+}
