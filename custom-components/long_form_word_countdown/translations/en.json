@@ -1,0 +1,18 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Create Long Form Countdown",
+        "description": "Enter the details for your new countdown timer.",
+        "data": {
+          "name": "Display Name",
+          "target_date": "Target Date and Time",
+          "icon": "Custom Icon"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "A countdown with this name already exists."
+    }
+  }
+}

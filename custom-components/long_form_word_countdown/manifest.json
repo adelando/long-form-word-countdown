@@ -1,0 +1,10 @@
+{
+  "domain": "long_form_word_countdown",
+  "name": "Long Form Word Countdown",
+  "codeowners": ["@yourusername"],
+  "config_flow": true,
+  "documentation": "https://github.com/yourusername/long_form_word_countdown",
+  "iot_class": "local_polling",
+  "requirements": ["python-dateutil==2.9.0"],
+  "version": "1.0.0"
+}
