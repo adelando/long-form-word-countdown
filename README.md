@@ -16,7 +16,7 @@ A custom Home Assistant integration that provides a highly descriptive countdown
 ### Option 1: HACS (Recommended)
 1.  Open **HACS** in Home Assistant.
 2.  Click the three dots in the top right and select **Custom repositories**.
-3.  Paste the URL of this repository: `https://github.com/YOUR_USERNAME/long-form-word-countdown`.
+3.  Paste the URL of this repository: `https://github.com/adelando/long-form-word-countdown`.
 4.  Select **Integration** as the category and click **Add**.
 5.  Click **Install**.
 6.  Restart Home Assistant.
