@@ -1,18 +1,19 @@
 {
   "config": {
+    "error": {
+      "cannot_select_both": "Cannot enable 'After Timer' and 'Flash Zero' simultaneously."
+    },
     "step": {
       "user": {
-        "title": "Create Long Form Countdown",
-        "description": "Enter the details for your new countdown timer.",
+        "title": "New Countdown",
         "data": {
-          "name": "Display Name",
-          "target_date": "Target Date and Time",
-          "icon": "Custom Icon"
+          "name": "Name",
+          "target_date": "Target Date",
+          "icon": "Icon",
+          "after_timer": "Show elapsed time after zero?",
+          "flash_zero": "Flash at zero? (Disables elapsed time)"
         }
       }
-    },
-    "abort": {
-      "already_configured": "A countdown with this name already exists."
     }
   }
 }
