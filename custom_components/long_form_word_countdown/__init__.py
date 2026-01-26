@@ -9,13 +9,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Long Form Word Countdown."""
     hass.data.setdefault(DOMAIN, {})
     
-    # Register the 'www' directory so the JS card is accessible
-    hass.http.register_static_path(
-        "/long_form_word_countdown",
-        hass.config.path("custom_components/long_form_word_countdown/www"),
-        True
-    )
-
+    # Corrected static path registration
+    # This maps 'http://your-ha-ip:8123/long_form_word_countdown/long-form-card.js'
+    # to your local www folder
+    local_path = hass.config.path("custom_components/long_form_word_countdown/www")
+    
+    if os.path.exists(local_path):
+        hass.http.register_static_path(
+            "/long_form_word_countdown",
+            local_path,
+            cache_headers=False
+        )
+    
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
