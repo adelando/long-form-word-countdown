@@ -7,5 +7,5 @@
   "documentation": "https://github.com/adelando/long_form_word_countdown",
   "iot_class": "local_polling",
   "requirements": ["python-dateutil==2.9.0"],
-  "version": "1.2.2"
+  "version": "1.2.3"
 }
