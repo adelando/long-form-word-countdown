@@ -2,7 +2,7 @@ import os
 import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.components.http import StaticPathConfig  # This is the key import
+from homeassistant.components.http import StaticPathConfig
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -12,16 +12,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Long Form Word Countdown."""
     hass.data.setdefault(DOMAIN, {})
     
-    # Register the JS card path using the modern async method
+    # Register the JS card path
+    # This maps the physical 'www' folder to the URL path
     local_path = hass.config.path("custom_components/long_form_word_countdown/www")
     
     if os.path.exists(local_path):
-        # We pass a list of StaticPathConfig objects
         await hass.http.async_register_static_paths([
             StaticPathConfig("/long_form_word_countdown", local_path, True)
         ])
+        _LOGGER.debug("Registered static path for Long Form Word Countdown")
     else:
-        _LOGGER.warning("The www directory was not found at %s", local_path)
+        _LOGGER.error("The www directory was not found at %s", local_path)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
