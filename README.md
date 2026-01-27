@@ -1,45 +1,57 @@
-# ⏳ Long Form Word Countdown for Home Assistant
+# ⏳ Long Form Word Countdown (LFWC)
 
-A custom Home Assistant integration that provides a highly descriptive countdown timer. Instead of just showing "3 days," it provides a detailed "Long Form" breakdown including years, months, days, hours, minutes, and seconds.
+A professional Home Assistant integration that provides highly descriptive countdown timers. Instead of simple timestamps, get a detailed breakdown in plain English (Years, Months, Days, etc.) with a dedicated custom dashboard card.
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 
 ## ✨ Features
-* **UI Configuration:** No YAML required! Add and configure via the Integrations menu.
-* **Detailed Breakdown:** Shows time remaining in `Y, M, D, H, M, S` format.
-* **Smart Formatting:** Automatically hides units that are zero (e.g., won't show "0y" if the date is this month).
-* **Custom Icons:** Choose any Material Design Icon during setup to match your event.
-* **Live Updates:** The sensor updates every second for precision.
+- **Visual Card Editor:** Configure your countdowns via a native UI—no YAML required.
+- **Prefix Organization:** All entities are automatically prefixed with `lfwc_` for easy filtering.
+- **Smart Grammar:** Correctly handles pluralization (e.g., "1 day" vs "2 days").
+- **Short Form Toggle:** Instantly switch between "1 year, 2 months" and "1y, 2m" via the card settings.
+- **Elapsed Tracking:** Automatically switches to "Elapsed" mode once the target date passes.
+- **Flash on Zero:** Optional visual alert that blinks the card when the timer expires.
+
+
 
 ## 🚀 Installation
 
-### Option 1: HACS (Recommended)
-1.  Open **HACS** in Home Assistant.
-2.  Click the three dots in the top right and select **Custom repositories**.
-3.  Paste the URL of this repository: `https://github.com/adelando/long-form-word-countdown`.
-4.  Select **Integration** as the category and click **Add**.
-5.  Click **Install**.
-6.  Restart Home Assistant.
+### 1. HACS (Recommended)
+1. Open **HACS** > **Integrations**.
+2. Click the three dots (top right) > **Custom repositories**.
+3. Add this Repository URL with the category **Integration**.
+4. Click **Install**, then **Restart Home Assistant**.
 
-### Option 2: Manual
-1.  Download the `long_form_word_countdown` folder from `custom_components/`.
-2.  Paste it into your Home Assistant `/config/custom_components/` directory.
-3.  Restart Home Assistant.
+### 2. Manual
+1. Copy the `long_form_word_countdown` folder into your `custom_components` directory.
+2. Restart Home Assistant.
 
 ## 🛠 Setup
-1.  Go to **Settings** > **Devices & Services**.
-2.  Click **+ Add Integration**.
-3.  Search for **Long Form Word Countdown**.
-4.  Follow the prompts to enter:
-    * **Name:** (e.g., "Summer Holiday")
-    * **Target Date & Time:** Use the calendar and clock picker.
-    * **Icon:** (e.g., `mdi:beach`)
 
-## 📊 Dashboard Example
-For a clean "Big Text" look, use a **Markdown Card**:
+### Integration Setup
+1. Go to **Settings** > **Devices & Services** > **Add Integration**.
+2. Search for **Long Form Word Countdown**.
+3. Enter your event name and target date. 
+   * *Note: Your entity will be created as `sensor.lfwc_your_name`.*
+Note: The sensor will use local machine time for the countdown.
 
-```yaml
-type: markdown
-content: >
-  # {{ state_attr('sensor.summer_holiday', 'friendly_name') }}
-  ### {{ states('sensor.summer_holiday') }}
+### Dashboard Card Setup
+1. Go to your Dashboard and click **Edit Dashboard** > **Add Card**.
+2. Search for **Long Form Word Countdown Card**.
+3. Use the visual editor to:
+   - Select your `lfwc_` sensor.
+   - Toggle **Short Form** (y, m, d) vs **Long Form** (years, months, days).
+   - Enable **Flash on Zero** if you want a visual alert for finished timers.
+   - Enable **Elapse timer** 
+
+
+
+## 📁 Repository Structure
+```text
+custom_components/long_form_word_countdown/
+├── translations/   # UI Text
+├── www/            # Custom Card & Visual Editor
+├── __init__.py     # Async Path Registration
+├── config_flow.py  # Integration UI
+├── manifest.json   # Dependencies & Versioning
+└── sensor.py       # Precise Math Engine
