@@ -1,32 +1,140 @@
-import os
-import logging
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.components.http import StaticPathConfig
-from .const import DOMAIN
+// --- 1. THE MAIN CARD ---
+class LongFormCountdownCard extends HTMLElement {
+  set hass(hass) {
+    const entityId = this.config.entity;
+    const stateObj = hass.states[entityId];
+    if (!stateObj) return;
 
-_LOGGER = logging.getLogger(__name__)
-PLATFORMS = ["sensor"]
+    if (!this.content) {
+      this.innerHTML = `
+        <ha-card style="padding: 16px;">
+          <div id="container" style="display: flex; align-items: center;">
+            <ha-icon id="icon" style="margin-right: 16px; --mdc-icon-size: 40px; color: var(--primary-color);"></ha-icon>
+            <div style="flex: 1;">
+              <div id="name" style="font-size: 0.9rem; color: var(--secondary-text-color); font-weight: 500;"></div>
+              <div id="timer" style="font-size: 1.1rem; font-weight: 400; line-height: 1.3;"></div>
+            </div>
+          </div>
+          <style>
+            @keyframes blink { 50% { opacity: 0.3; } }
+            .flashing { animation: blink 1s linear infinite; color: var(--error-color) !important; font-weight: bold; }
+          </style>
+        </ha-card>
+      `;
+      this.content = this.querySelector("#timer");
+      this.nameContainer = this.querySelector("#name");
+      this.iconContainer = this.querySelector("#icon");
+    }
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Long Form Word Countdown."""
-    hass.data.setdefault(DOMAIN, {})
-    
-    # Register the JS card path
-    # This maps the physical 'www' folder to the URL path
-    local_path = hass.config.path("custom_components/long_form_word_countdown/www")
-    
-    if os.path.exists(local_path):
-        await hass.http.async_register_static_paths([
-            StaticPathConfig("/long_form_word_countdown", local_path, True)
-        ])
-        _LOGGER.debug("Registered static path for Long Form Word Countdown")
-    else:
-        _LOGGER.error("The www directory was not found at %s", local_path)
+    let displayState = stateObj.state;
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    return True
+    // Apply Short Form logic
+    if (this.config.short_form) {
+      displayState = displayState
+        .replace(/ years?/g, "y")
+        .replace(/ months?/g, "m")
+        .replace(/ days?/g, "d")
+        .replace(/ hours?/g, "h")
+        .replace(/ minutes?/g, "m")
+        .replace(/ seconds?/g, "s");
+    }
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    this.nameContainer.innerText = stateObj.attributes.friendly_name;
+    this.content.innerText = displayState;
+    this.iconContainer.setAttribute("icon", stateObj.attributes.icon || "mdi:timer-sand");
+
+    // Flash logic: checks if "Elapsed" is in state or total_seconds_left <= 0
+    const isFinished = stateObj.state.includes("Elapsed") || (stateObj.attributes.total_seconds_left <= 0);
+    if (this.config.flash_zero && isFinished) {
+      this.content.classList.add("flashing");
+    } else {
+      this.content.classList.remove("flashing");
+    }
+  }
+
+  setConfig(config) {
+    if (!config.entity) throw new Error("Please define an entity");
+    this.config = config;
+  }
+
+  static getConfigElement() {
+    return document.createElement("long-form-countdown-editor");
+  }
+
+  static getStubConfig() {
+    return { entity: "", short_form: false, flash_zero: false };
+  }
+}
+
+// --- 2. THE VISUAL EDITOR ---
+class LongFormCountdownEditor extends HTMLElement {
+  set hass(hass) {
+    this._hass = hass;
+    if (this._config) this._render();
+  }
+
+  setConfig(config) {
+    this._config = config;
+  }
+
+  connectedCallback() {
+    this._render();
+  }
+
+  _render() {
+    if (this.shadowRoot) return;
+    this.attachShadow({ mode: 'open' });
+    this.shadowRoot.innerHTML = `
+      <style>
+        .option { padding: 8px 0; display: flex; align-items: center; justify-content: space-between; }
+      </style>
+      <div class="card-config">
+        <ha-entity-picker
+          .label="Countdown Entity"
+          .hass=${this._hass}
+          .value=${this._config.entity}
+          .includeDomains=${['sensor']}
+          @value-changed=${(ev) => this._valueChanged(ev, 'entity')}
+        ></ha-entity-picker>
+        
+        <div class="option">
+          <span>Short Form (y, m, d)</span>
+          <ha-switch
+            .checked=${this._config.short_form}
+            @change=${(ev) => this._valueChanged(ev, 'short_form', true)}
+          ></ha-switch>
+        </div>
+
+        <div class="option">
+          <span>Flash on Zero</span>
+          <ha-switch
+            .checked=${this._config.flash_zero}
+            @change=${(ev) => this._valueChanged(ev, 'flash_zero', true)}
+          ></ha-switch>
+        </div>
+      </div>
+    `;
+  }
+
+  _valueChanged(ev, field, isBoolean = false) {
+    const value = isBoolean ? ev.target.checked : ev.detail.value;
+    const newConfig = { ...this._config, [field]: value };
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      detail: { config: newConfig },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+}
+
+// --- 3. REGISTER WITH HOME ASSISTANT ---
+customElements.define("long-form-countdown-card", LongFormCountdownCard);
+customElements.define("long-form-countdown-editor", LongFormCountdownEditor);
+
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "long-form-countdown-card",
+  name: "Long Form Word Countdown",
+  description: "Display a word-based countdown with optional flashing and short-form text.",
+  preview: true,
+});
