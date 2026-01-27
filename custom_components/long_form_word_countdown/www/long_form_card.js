@@ -28,6 +28,7 @@ class LongFormCountdownCard extends HTMLElement {
     let displayState = stateObj.state;
     const isFinished = stateObj.attributes.finished || stateObj.attributes.total_seconds_left <= 0;
 
+    // Logic for Flash vs Elapsed vs Default
     if (isFinished) {
       if (this.config.flash_zero) {
         displayState = "Timer Complete";
@@ -36,13 +37,14 @@ class LongFormCountdownCard extends HTMLElement {
       }
     }
 
+    // Short form regex
     if (this.config.short_form) {
       displayState = displayState
         .replace(/ years?/g, "y").replace(/ months?/g, "m").replace(/ days?/g, "d")
         .replace(/ hours?/g, "h").replace(/ minutes?/g, "m").replace(/ seconds?/g, "s");
     }
 
-    // Apply Theme Styles
+    // Apply Theme
     const timerColor = this.config.timer_color || 'var(--primary-color)';
     const fontSize = this.config.font_size || '1.1';
     
@@ -62,6 +64,7 @@ class LongFormCountdownCard extends HTMLElement {
   }
 
   setConfig(config) {
+    if (!config.entity) throw new Error("Please define an entity");
     this.config = { 
       short_form: false, 
       flash_zero: false, 
@@ -76,7 +79,7 @@ class LongFormCountdownCard extends HTMLElement {
   static getStubConfig() { return { entity: "", short_form: false, flash_zero: false, show_elapsed: true }; }
 }
 
-// --- VISUAL EDITOR WITH THEME OPTIONS ---
+// --- VISUAL EDITOR ---
 class LongFormCountdownEditor extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
@@ -145,6 +148,7 @@ class LongFormCountdownEditor extends HTMLElement {
   }
 }
 
+// Registration
 customElements.define("long-form-countdown-card", LongFormCountdownCard);
 customElements.define("long-form-countdown-editor", LongFormCountdownEditor);
 
@@ -152,5 +156,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "long-form-countdown-card",
   name: "Long Form Word Countdown",
+  description: "Advanced word-based countdown card.",
   preview: true,
 });
