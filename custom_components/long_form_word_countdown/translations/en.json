@@ -1,17 +1,32 @@
 {
   "config": {
-    "error": {
-      "cannot_select_both": "Cannot enable 'After Timer' and 'Flash Zero' simultaneously."
-    },
     "step": {
       "user": {
-        "title": "New Countdown",
+        "title": "Create Countdown",
         "data": {
-          "name": "Name",
-          "target_date": "Target Date",
-          "icon": "Icon",
-          "after_timer": "Show elapsed time after zero?",
-          "flash_zero": "Flash at zero? (Disables elapsed time)"
+          "name": "Event Name",
+          "target_date": "Target Date and Time",
+          "icon": "Icon"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This countdown is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Update Countdown Settings",
+        "data": {
+          "name": "Event Name",
+          "target_date": "Target Date and Time",
+          "icon": "Icon"
         }
       }
     }
