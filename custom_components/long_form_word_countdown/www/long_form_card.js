@@ -1,4 +1,3 @@
-// --- 1. THE MAIN CARD ---
 class LongFormCountdownCard extends HTMLElement {
   set hass(hass) {
     const entityId = this.config.entity;
@@ -27,24 +26,28 @@ class LongFormCountdownCard extends HTMLElement {
     }
 
     let displayState = stateObj.state;
+    const isFinished = stateObj.attributes.finished || stateObj.attributes.total_seconds_left <= 0;
 
-    // Apply Short Form logic
+    // Handle Logic: Flash "Timer Complete" vs "Elapsed: ..."
+    if (isFinished) {
+      if (this.config.flash_zero) {
+        displayState = "Timer Complete";
+      } else if (!this.config.show_elapsed) {
+        displayState = "0 seconds"; // Fallback if someone disables both somehow
+      }
+    }
+
+    // Short form logic
     if (this.config.short_form) {
       displayState = displayState
-        .replace(/ years?/g, "y")
-        .replace(/ months?/g, "m")
-        .replace(/ days?/g, "d")
-        .replace(/ hours?/g, "h")
-        .replace(/ minutes?/g, "m")
-        .replace(/ seconds?/g, "s");
+        .replace(/ years?/g, "y").replace(/ months?/g, "m").replace(/ days?/g, "d")
+        .replace(/ hours?/g, "h").replace(/ minutes?/g, "m").replace(/ seconds?/g, "s");
     }
 
     this.nameContainer.innerText = stateObj.attributes.friendly_name;
     this.content.innerText = displayState;
     this.iconContainer.setAttribute("icon", stateObj.attributes.icon || "mdi:timer-sand");
 
-    // Flash logic: checks if "Elapsed" is in state or total_seconds_left <= 0
-    const isFinished = stateObj.state.includes("Elapsed") || (stateObj.attributes.total_seconds_left <= 0);
     if (this.config.flash_zero && isFinished) {
       this.content.classList.add("flashing");
     } else {
@@ -53,81 +56,68 @@ class LongFormCountdownCard extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!config.entity) throw new Error("Please define an entity");
-    this.config = config;
+    this.config = { short_form: false, flash_zero: false, show_elapsed: true, ...config };
   }
 
-  static getConfigElement() {
-    return document.createElement("long-form-countdown-editor");
-  }
-
-  static getStubConfig() {
-    return { entity: "", short_form: false, flash_zero: false };
-  }
+  static getConfigElement() { return document.createElement("long-form-countdown-editor"); }
+  static getStubConfig() { return { entity: "", short_form: false, flash_zero: false, show_elapsed: true }; }
 }
 
-// --- 2. THE VISUAL EDITOR ---
 class LongFormCountdownEditor extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (this._config) this._render();
   }
-
-  setConfig(config) {
-    this._config = config;
-  }
-
-  connectedCallback() {
-    this._render();
-  }
+  setConfig(config) { this._config = config; }
 
   _render() {
-    if (this.shadowRoot) return;
-    this.attachShadow({ mode: 'open' });
-    this.shadowRoot.innerHTML = `
-      <style>
-        .option { padding: 8px 0; display: flex; align-items: center; justify-content: space-between; }
-      </style>
-      <div class="card-config">
-        <ha-entity-picker
-          .label="Countdown Entity"
-          .hass=${this._hass}
-          .value=${this._config.entity}
-          .includeDomains=${['sensor']}
-          @value-changed=${(ev) => this._valueChanged(ev, 'entity')}
-        ></ha-entity-picker>
-        
-        <div class="option">
-          <span>Short Form (y, m, d)</span>
-          <ha-switch
-            .checked=${this._config.short_form}
-            @change=${(ev) => this._valueChanged(ev, 'short_form', true)}
-          ></ha-switch>
-        </div>
+    if (this.shadowRoot) this.shadowRoot.innerHTML = "";
+    else this.attachShadow({ mode: "open" });
 
-        <div class="option">
-          <span>Flash on Zero</span>
-          <ha-switch
-            .checked=${this._config.flash_zero}
-            @change=${(ev) => this._valueChanged(ev, 'flash_zero', true)}
-          ></ha-switch>
-        </div>
+    const container = document.createElement("div");
+    container.className = "card-config";
+    container.innerHTML = `
+      <style>
+        .option { padding: 12px 0; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--divider-color); }
+        ha-switch { padding: 4px; }
+      </style>
+      <ha-entity-picker .label="Countdown Entity" .hass=${this._hass} .value=${this._config.entity} .includeDomains=${["sensor"]} @value-changed=${(ev) => this._valueChanged(ev, "entity")}></ha-entity-picker>
+      
+      <div class="option"><span>Short Form (y, m, d)</span>
+        <ha-switch .checked=${this._config.short_form} @change=${(ev) => this._valueChanged(ev, "short_form", true)}></ha-switch>
+      </div>
+      <div class="option"><span>Show Elapsed Time</span>
+        <ha-switch .checked=${this._config.show_elapsed} @change=${(ev) => this._toggleExclusive(ev, "show_elapsed")}></ha-switch>
+      </div>
+      <div class="option"><span>Flash "Timer Complete"</span>
+        <ha-switch .checked=${this._config.flash_zero} @change=${(ev) => this._toggleExclusive(ev, "flash_zero")}></ha-switch>
       </div>
     `;
+    this.shadowRoot.appendChild(container);
+  }
+
+  _toggleExclusive(ev, field) {
+    const isChecked = ev.target.checked;
+    let newConfig = { ...this._config, [field]: isChecked };
+
+    if (field === "show_elapsed" && isChecked) newConfig.flash_zero = false;
+    if (field === "flash_zero" && isChecked) newConfig.show_elapsed = false;
+
+    this._config = newConfig;
+    this._render(); // Re-render switches to show state
+    this._fireConfigChanged();
   }
 
   _valueChanged(ev, field, isBoolean = false) {
-    const value = isBoolean ? ev.target.checked : ev.detail.value;
-    const newConfig = { ...this._config, [field]: value };
-    this.dispatchEvent(new CustomEvent("config-changed", {
-      detail: { config: newConfig },
-      bubbles: true,
-      composed: true,
-    }));
+    this._config = { ...this._config, [field]: isBoolean ? ev.target.checked : ev.detail.value };
+    this._fireConfigChanged();
+  }
+
+  _fireConfigChanged() {
+    this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
   }
 }
 
-// --- 3. REGISTER WITH HOME ASSISTANT ---
 customElements.define("long-form-countdown-card", LongFormCountdownCard);
 customElements.define("long-form-countdown-editor", LongFormCountdownEditor);
 
@@ -135,6 +125,5 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "long-form-countdown-card",
   name: "Long Form Word Countdown",
-  description: "Display a word-based countdown with optional flashing and short-form text.",
   preview: true,
 });
