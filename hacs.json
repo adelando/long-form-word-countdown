@@ -3,7 +3,6 @@
   "name": "Long Form Word Countdown",
   "render_readme": true,
   "type": "integration",
-  "filename": "long-form-card.js",
   "iot_class": "local_polling",
-  "content_text": "A countdown timer with full word support and a custom card"
+  "content_text": "A countdown timer with full word support"
 }
