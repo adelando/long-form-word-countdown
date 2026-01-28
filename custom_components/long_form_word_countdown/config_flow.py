@@ -26,20 +26,16 @@ class LongFormCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
-        return LongFormCountdownOptionsFlowHandler(config_entry)
+        return LongFormCountdownOptionsFlowHandler()
 
 class LongFormCountdownOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for the integration."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        # This tells the parent class to handle the config_entry for us
-        super().__init__(config_entry)
-
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
-            # self.config_entry is now safely available via the parent class
+            # self.config_entry is automatically set by HA 
+            # when the handler is initiated
             new_data = {**self.config_entry.data, **user_input}
             self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
             return self.async_create_entry(title="", data={})
