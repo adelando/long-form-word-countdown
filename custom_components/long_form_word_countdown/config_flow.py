@@ -9,7 +9,7 @@ class LongFormCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input=None):
-        """Handle the initial step."""
+        """Handle the initial step when adding a new integration."""
         if user_input is not None:
             return self.async_create_entry(title=user_input["name"], data=user_input)
 
@@ -31,17 +31,20 @@ class LongFormCountdownConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class LongFormCountdownOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for the integration (The 'Configure' button)."""
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+        """Initialize options flow."""
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
-            # Update the entry data with the new values
+            # We update the actual entry data
             new_data = {**self.config_entry.data, **user_input}
             self.hass.config_entries.async_update_entry(self.config_entry, data=new_data)
+            # This returns an empty entry to signal completion
             return self.async_create_entry(title="", data={})
 
+        # Pre-fill with current values
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
