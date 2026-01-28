@@ -21,14 +21,17 @@ class LongFormCountdownCard extends HTMLElement {
     const stateObj = hass.states[entityId];
 
     if (!stateObj) {
-      this.shadowRoot.innerHTML = `<ha-card style="padding:16px;color:var(--error-color);">Entity not found: ${entityId}</ha-card>`;
+      this.shadowRoot.innerHTML = `
+        <ha-card style="padding:16px;color:var(--error-color);">
+          Entity not found: ${entityId}
+        </ha-card>`;
       return;
     }
 
     const isFinished = stateObj.attributes.finished || stateObj.attributes.total_seconds_left <= 0;
     let displayState = stateObj.state;
 
-    // Zero-state Logic
+    // Zero-state logic
     if (isFinished) {
       if (this.config.flash_zero) {
         displayState = "Timer Complete";
@@ -37,7 +40,7 @@ class LongFormCountdownCard extends HTMLElement {
       }
     }
 
-    // Formatting Logic
+    // Formatting logic
     if (this.config.short_form) {
       displayState = displayState
         .replace(/ years?/g, "y").replace(/ months?/g, "m").replace(/ days?/g, "d")
@@ -46,11 +49,11 @@ class LongFormCountdownCard extends HTMLElement {
 
     this.shadowRoot.innerHTML = `
       <style>
-        ha-card { padding: 16px; display: flex; align-items: center; }
-        .icon { margin-right: 16px; --mdc-icon-size: 40px; color: ${this.config.timer_color}; }
-        .info { flex: 1; }
-        .name { font-size: 0.9rem; color: var(--secondary-text-color); margin-bottom: 4px; }
-        .timer { font-size: ${this.config.font_size}rem; color: ${this.config.timer_color}; font-weight: 500; }
+        ha-card { padding: 16px; display: flex; align-items: center; background: var(--ha-card-background, var(--card-background-color, white)); border-radius: var(--ha-card-border-radius, 12px); box-shadow: var(--ha-card-box-shadow, none); border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color, #e0e0e0)); }
+        .icon { margin-right: 16px; --mdc-icon-size: 40px; color: ${this.config.timer_color}; flex-shrink: 0; }
+        .info { flex: 1; min-width: 0; }
+        .name { font-size: 0.9rem; color: var(--secondary-text-color); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .timer { font-size: ${this.config.font_size}rem; color: ${this.config.timer_color}; font-weight: 500; line-height: 1.2; }
         @keyframes blink { 50% { opacity: 0.3; } }
         .flashing { animation: blink 1s linear infinite; color: var(--error-color) !important; font-weight: bold; }
       </style>
@@ -73,7 +76,7 @@ class LongFormCountdownCard extends HTMLElement {
   }
 }
 
-// --- FULL VISUAL EDITOR ---
+// --- VISUAL EDITOR COMPONENT ---
 class LongFormCountdownEditor extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
@@ -96,24 +99,22 @@ class LongFormCountdownEditor extends HTMLElement {
         </ha-entity-picker>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <ha-formfield label="Short Form (y, m, d)">
+          <ha-formfield label="Short Form">
             <ha-switch .checked=${this._config.short_form} @change=${(ev) => this._valueChanged(ev, 'short_form', true)}></ha-switch>
           </ha-formfield>
-          
           <ha-formfield label="Flash on Finish">
             <ha-switch .checked=${this._config.flash_zero} @change=${(ev) => this._valueChanged(ev, 'flash_zero', true)}></ha-switch>
           </ha-formfield>
         </div>
 
         <div style="padding: 12px; background: var(--secondary-background-color); border-radius: 8px;">
-          <label style="display:block; margin-bottom:8px; font-weight:bold;">Style Settings</label>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-            <span>Font Size</span>
-            <input type="range" min="0.8" max="3" step="0.1" value="${this._config.font_size}" @input=${(ev) => this._valueChanged(ev, 'font_size')}>
+          <div style="margin-bottom:10px;">
+            <label>Font Size (rem)</label>
+            <input type="number" step="0.1" value="${this._config.font_size}" @change=${(ev) => this._valueChanged(ev, 'font_size')} style="width: 100%; height: 32px;">
           </div>
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <span>Timer Color (Hex or CSS Var)</span>
-            <input type="text" value="${this._config.timer_color}" @change=${(ev) => this._valueChanged(ev, 'timer_color')} style="width:120px; background:transparent; border:1px solid var(--divider-color); color:inherit; padding:4px;">
+          <div>
+            <label>Timer Color</label>
+            <input type="text" value="${this._config.timer_color}" @change=${(ev) => this._valueChanged(ev, 'timer_color')} style="width: 100%; height: 32px;">
           </div>
         </div>
       </div>
@@ -121,9 +122,10 @@ class LongFormCountdownEditor extends HTMLElement {
   }
 
   _valueChanged(ev, field, isBool = false) {
-    const value = isBool ? ev.target.checked : (ev.detail?.value || ev.target.value);
+    const newValue = isBool ? ev.target.checked : (ev.detail?.value || ev.target.value);
+    const config = { ...this._config, [field]: newValue };
     this.dispatchEvent(new CustomEvent("config-changed", {
-      detail: { config: { ...this._config, [field]: value } },
+      detail: { config },
       bubbles: true,
       composed: true
     }));
@@ -137,6 +139,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "long-form-countdown-card",
   name: "Long Form Word Countdown",
-  description: "Advanced word-based countdown with styling options.",
+  description: "Advanced countdown with styling options.",
   preview: true
 });
