@@ -22,8 +22,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ])
 
     # 2. Tell the dashboard to load the JS file from that new path
-    # We add a version ?v=1 to ensure it refreshes
-    add_extra_js_url(hass, "/lfwc-card/long-form-card.js?v=1")
+    add_extra_js_url(hass, "/lfwc-card/long-form-card.js?v=2")
 
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     return True
