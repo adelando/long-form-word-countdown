@@ -8,19 +8,28 @@ from homeassistant.components.http import StaticPathConfig
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    # Get the absolute path to your www folder inside the integration
-    # This path MUST exist: custom_components/long_form_word_countdown/www/
-    js_path = hass.config.path("custom_components/long_form_word_countdown/www")
+    # 1. Identify the internal path
+    js_dir = hass.config.path("custom_components/long_form_word_countdown/www")
+    js_file = os.path.join(js_dir, "long-form-card.js")
     
-    if os.path.exists(js_path):
-        _LOGGER.warning("LFWC: Registering static path at %s", js_path)
+    _LOGGER.warning("LFWC: Checking for folder at: %s", js_dir)
+
+    # 2. Check if folder and file actually exist
+    if os.path.exists(js_dir):
+        _LOGGER.warning("LFWC: Folder FOUND. Registering URL path /lfwc-card/")
+        
         await hass.http.async_register_static_paths([
-            StaticPathConfig("/lfwc-card", js_path, False)
+            StaticPathConfig("/lfwc-card", js_dir, False)
         ])
-        # We use a unique version number to kill the cache
-        add_extra_js_url(hass, "/lfwc-card/long-form-card.js?v=999")
+        
+        if os.path.isfile(js_file):
+             _LOGGER.warning("LFWC: JS file FOUND. Adding to frontend.")
+             # v=101 to force a fresh download
+             add_extra_js_url(hass, "/lfwc-card/long-form-card.js?v=101")
+        else:
+             _LOGGER.warning("LFWC: JS file NOT FOUND at %s", js_file)
     else:
-        _LOGGER.error("LFWC: Could not find www folder at %s", js_path)
+        _LOGGER.warning("LFWC: Folder NOT FOUND at %s", js_dir)
 
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     return True
