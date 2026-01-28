@@ -2,7 +2,11 @@ class LongFormCountdownCard extends HTMLElement {
   set hass(hass) {
     const entityId = this.config.entity;
     const stateObj = hass.states[entityId];
-    if (!stateObj) return;
+    
+    if (!stateObj) {
+      this.innerHTML = `<ha-alert alert-type="error">Entity not found: ${entityId}</ha-alert>`;
+      return;
+    }
 
     if (!this.content) {
       this.innerHTML = `
@@ -28,7 +32,7 @@ class LongFormCountdownCard extends HTMLElement {
     let displayState = stateObj.state;
     const isFinished = stateObj.attributes.finished || stateObj.attributes.total_seconds_left <= 0;
 
-    // Logic for Flash vs Elapsed vs Default
+    // Logic: Flash vs Elapsed vs Default
     if (isFinished) {
       if (this.config.flash_zero) {
         displayState = "Timer Complete";
@@ -44,15 +48,15 @@ class LongFormCountdownCard extends HTMLElement {
         .replace(/ hours?/g, "h").replace(/ minutes?/g, "m").replace(/ seconds?/g, "s");
     }
 
-    // Apply Theme
+    // Apply Styles
     const timerColor = this.config.timer_color || 'var(--primary-color)';
     const fontSize = this.config.font_size || '1.1';
     
     this.content.style.color = timerColor;
-    this.content.style.fontSize = `${fontSize}rem`;
+    this.content.style.fontSize = fontSize + "rem";
     this.iconContainer.style.color = timerColor;
 
-    this.nameContainer.innerText = stateObj.attributes.friendly_name;
+    this.nameContainer.innerText = stateObj.attributes.friendly_name || stateObj.entity_id;
     this.content.innerText = displayState;
     this.iconContainer.setAttribute("icon", stateObj.attributes.icon || "mdi:timer-sand");
 
@@ -65,18 +69,23 @@ class LongFormCountdownCard extends HTMLElement {
 
   setConfig(config) {
     if (!config.entity) throw new Error("Please define an entity");
-    this.config = { 
-      short_form: false, 
-      flash_zero: false, 
-      show_elapsed: true, 
-      timer_color: "", 
-      font_size: "1.1",
-      ...config 
-    };
+    this.config = config;
   }
 
-  static getConfigElement() { return document.createElement("long-form-countdown-editor"); }
-  static getStubConfig() { return { entity: "", short_form: false, flash_zero: false, show_elapsed: true }; }
+  static getConfigElement() {
+    return document.createElement("long-form-countdown-editor");
+  }
+
+  static getStubConfig() {
+    return { 
+      entity: "", 
+      short_form: false, 
+      flash_zero: false, 
+      show_elapsed: true,
+      timer_color: "",
+      font_size: "1.1"
+    };
+  }
 }
 
 // --- VISUAL EDITOR ---
@@ -85,11 +94,17 @@ class LongFormCountdownEditor extends HTMLElement {
     this._hass = hass;
     if (this._config) this._render();
   }
-  setConfig(config) { this._config = config; }
+
+  setConfig(config) {
+    this._config = config;
+  }
 
   _render() {
-    if (this.shadowRoot) this.shadowRoot.innerHTML = "";
-    else this.attachShadow({ mode: "open" });
+    if (this.shadowRoot) {
+      this.shadowRoot.innerHTML = "";
+    } else {
+      this.attachShadow({ mode: "open" });
+    }
 
     const container = document.createElement("div");
     container.innerHTML = `
@@ -144,11 +159,16 @@ class LongFormCountdownEditor extends HTMLElement {
   }
 
   _fireConfigChanged() {
-    this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
+    const event = new CustomEvent("config-changed", {
+      detail: { config: this._config },
+      bubbles: true,
+      composed: true
+    });
+    this.dispatchEvent(event);
   }
 }
 
-// Registration
+// Global Registration
 customElements.define("long-form-countdown-card", LongFormCountdownCard);
 customElements.define("long-form-countdown-editor", LongFormCountdownEditor);
 
@@ -156,6 +176,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "long-form-countdown-card",
   name: "Long Form Word Countdown",
-  description: "Advanced word-based countdown card.",
-  preview: true,
+  description: "Advanced word-based countdown card with theme support.",
+  preview: true
 });
